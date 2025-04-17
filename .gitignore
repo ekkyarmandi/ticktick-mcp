@@ -1,0 +1,8 @@
+.cursor/
+.vscode/
+.venv/
+__pycache__/
+archive/
+
+.env
+.token-oauth
