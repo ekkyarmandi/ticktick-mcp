@@ -56,38 +56,67 @@ async def create_project(project_name: str):
 @mcp.tool()
 async def create_task(
     project_id: str,
-    task_name: str,
-    content: str,
-    desc: str,
-    isAllDay: bool,
-    startDate: str,
-    dueDate: str,
+    title: str,
+    content: str | None = None,
+    desc: str | None = None,
+    isAllDay: bool | None = None,
+    startDate: str | None = None,
+    dueDate: str | None = None,
+    timeZone: str | None = None,
+    reminders: list | None = None,
+    repeatFlag: str | None = None,
+    priority: int | None = 0,
+    sortOrder: int | None = None,
+    items: list | None = None,
 ):
     """
     Creates a new task in TickTick.
 
-    Body Args:
-    projectId, id of the project
-    name, name of the task
-    title, title of the task
-    content, content of the task
-    desc, description of the task
-    isAllDay, whether the task is all day
-    startDate, start date of the task if not all day
-    dueDate, due date of the task if not all day
+    Args:
+        project_id: ID of the project the task belongs to.
+        title: Task title (required).
+        content: Task content.
+        desc: Description of checklist.
+        isAllDay: All-day event flag.
+        startDate: Start date/time (e.g., "2019-11-13T03:00:00+0000").
+        dueDate: Due date/time (e.g., "2019-11-13T03:00:00+0000").
+        timeZone: Time zone for the dates.
+        reminders: List of reminders.
+        repeatFlag: Recurrence rules.
+        priority: Task priority (0=Normal, higher=higher priority).
+        sortOrder: Sort order.
+        items: List of subtasks (dicts with keys like 'title', 'startDate', etc.).
     """
     url = f"{TICKTICK_API_BASE}/task"
     payload = {
         "projectId": project_id,
-        "name": task_name,
-        "title": task_name,
-        "content": content,
-        "desc": desc,
-        "isAllDay": isAllDay,
+        "title": title,
     }
-    if not isAllDay:
+    if content is not None:
+        payload["content"] = content
+    if desc is not None:
+        payload["desc"] = desc
+    if isAllDay is not None:
+        payload["isAllDay"] = isAllDay
+    if startDate is not None:
         payload["startDate"] = startDate
+    if dueDate is not None:
         payload["dueDate"] = dueDate
+    if timeZone is not None:
+        payload["timeZone"] = timeZone
+    if reminders is not None:
+        payload["reminders"] = reminders
+    if repeatFlag is not None:
+        payload["repeatFlag"] = repeatFlag
+    if priority is not None:
+        payload["priority"] = priority
+    if sortOrder is not None:
+        payload["sortOrder"] = sortOrder
+    if items is not None:
+        payload["items"] = items
+
+    if isAllDay is False and startDate is None:
+        pass
 
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=HEADERS, json=payload)
@@ -97,34 +126,71 @@ async def create_task(
 @mcp.tool()
 async def update_task(
     task_id: str,
-    task_name: str,
-    content: str,
-    desc: str,
-    isAllDay: bool,
-    startDate: str,
-    dueDate: str,
+    project_id: str,
+    title: str | None = None,
+    content: str | None = None,
+    desc: str | None = None,
+    isAllDay: bool | None = None,
+    startDate: str | None = None,
+    dueDate: str | None = None,
+    timeZone: str | None = None,
+    reminders: list | None = None,
+    repeatFlag: str | None = None,
+    priority: int | None = None,
+    sortOrder: int | None = None,
+    items: list | None = None,
 ):
     """
     Updates a task in TickTick.
 
-    Body Args:
-    name, name of the task
-    title, title of the task
-    content, content of the task
-    desc, description of the task
-    isAllDay, whether the task is all day
+    Args:
+        task_id: Task identifier (required, for URL path).
+        project_id: Project ID (required, in body).
+        title: Task title.
+        content: Task content.
+        desc: Description of checklist.
+        isAllDay: All-day event flag.
+        startDate: Start date/time (e.g., "2019-11-13T03:00:00+0000").
+        dueDate: Due date/time (e.g., "2019-11-13T03:00:00+0000").
+        timeZone: Time zone for the dates.
+        reminders: List of reminders.
+        repeatFlag: Recurrence rules.
+        priority: Task priority (0=Normal, higher=higher priority).
+        sortOrder: Sort order.
+        items: List of subtasks (dicts with keys like 'title', 'startDate', etc.).
     """
-    url = f"{TICKTICK_API_BASE}/task/{task_id} "
+    url = f"{TICKTICK_API_BASE}/task/{task_id}"
     payload = {
-        "name": task_name,
-        "title": task_name,
-        "content": content,
-        "desc": desc,
-        "isAllDay": isAllDay,
+        "id": task_id,
+        "projectId": project_id,
     }
-    if not isAllDay:
+    if title is not None:
+        payload["title"] = title
+    if content is not None:
+        payload["content"] = content
+    if desc is not None:
+        payload["desc"] = desc
+    if isAllDay is not None:
+        payload["isAllDay"] = isAllDay
+    if startDate is not None:
         payload["startDate"] = startDate
+    if dueDate is not None:
         payload["dueDate"] = dueDate
+    if timeZone is not None:
+        payload["timeZone"] = timeZone
+    if reminders is not None:
+        payload["reminders"] = reminders
+    if repeatFlag is not None:
+        payload["repeatFlag"] = repeatFlag
+    if priority is not None:
+        payload["priority"] = priority
+    if sortOrder is not None:
+        payload["sortOrder"] = sortOrder
+    if items is not None:
+        payload["items"] = items
+
+    if isAllDay is False and startDate is None:
+        pass
 
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=HEADERS, json=payload)
