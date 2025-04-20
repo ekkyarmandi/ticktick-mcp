@@ -198,22 +198,22 @@ async def update_task(
 
 
 @mcp.tool()
-async def complete_task(task_id: str):
+async def complete_task(project_id: str, task_id: str):
     """
     Completes a task in TickTick.
     """
-    url = f"{TICKTICK_API_BASE}/task/{task_id}/complete"
+    url = f"{TICKTICK_API_BASE}/project/{project_id}/task/{task_id}/complete"
     async with httpx.AsyncClient() as client:
         response = await client.post(url, headers=HEADERS)
         return response.json()
 
 
 @mcp.tool()
-async def delete_task(task_id: str):
+async def delete_task(project_id: str, task_id: str):
     """
     Deletes a task in TickTick.
     """
-    url = f"{TICKTICK_API_BASE}/task/{task_id}"
+    url = f"{TICKTICK_API_BASE}/project/{project_id}/task/{task_id}"
     async with httpx.AsyncClient() as client:
         response = await client.delete(url, headers=HEADERS)
         return response.json()

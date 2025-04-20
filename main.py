@@ -12,6 +12,7 @@ mcp = FastMCP("ticktick_mcp")
 
 mcp.add_tool(get_projects)
 mcp.add_tool(project_details)
+mcp.add_tool(get_task_details)
 mcp.add_tool(create_project)
 mcp.add_tool(create_task)
 mcp.add_tool(update_task)
