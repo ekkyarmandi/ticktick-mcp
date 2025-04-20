@@ -204,8 +204,8 @@ async def complete_task(project_id: str, task_id: str):
     """
     url = f"{TICKTICK_API_BASE}/project/{project_id}/task/{task_id}/complete"
     async with httpx.AsyncClient() as client:
-        response = await client.post(url, headers=HEADERS)
-        return response.json()
+        await client.post(url, headers=HEADERS)
+        return {"message": "Task completed"}
 
 
 @mcp.tool()
@@ -215,5 +215,5 @@ async def delete_task(project_id: str, task_id: str):
     """
     url = f"{TICKTICK_API_BASE}/project/{project_id}/task/{task_id}"
     async with httpx.AsyncClient() as client:
-        response = await client.delete(url, headers=HEADERS)
-        return response.json()
+        await client.delete(url, headers=HEADERS)
+        return {"message": "Task deleted"}
