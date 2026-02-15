@@ -1,4 +1,5 @@
 # TickTick MCP
+[![Trust Score](https://archestra.ai/mcp-catalog/api/badge/quality/ekkyarmandi/ticktick-mcp)](https://archestra.ai/mcp-catalog/ekkyarmandi__ticktick-mcp)
 
 A Model Context Protocol (MCP) server that provides tools for integrating TickTick task management tools. Using Python and the MCP SDK.
 
