@@ -13,6 +13,10 @@ This repository contains a Model Context Protocol (MCP) server implementation fo
 
 With this MCP, AI systems can act as task masters to help manage your to-do lists and tasks in TickTick with natural language.
 
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/ekkyarmandi-ticktick-mcp).
+
 ## Requirements
 
 - Python 3.8+
