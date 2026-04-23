@@ -121,8 +121,8 @@ func stringValue(value any) string {
 }
 
 type tickTickService struct {
-	client            *tickTickClient
-	excludedGroupIDs  map[string]bool
+	client             *tickTickClient
+	excludedGroupIDs   map[string]bool
 	excludedProjectIDs map[string]bool
 }
 

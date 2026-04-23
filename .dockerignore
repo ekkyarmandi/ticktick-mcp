@@ -1,0 +1,9 @@
+.git
+.gitignore
+.mcp.json
+.env
+.token-oauth
+ticktick-mcp
+start.sh
+build-mcp-using-go.md
+TICKTICK_INSTRUCTION.md

@@ -1,6 +1,6 @@
 # TickTick MCP
 
-A Go-based Model Context Protocol (MCP) server for TickTick. It exposes TickTick project and task operations over stdio using the official Go MCP SDK.
+A Go-based Model Context Protocol (MCP) server for TickTick. It supports local stdio mode for desktop MCP clients and Streamable HTTP mode for cloud deployment.
 
 ## Overview
 
@@ -75,6 +75,22 @@ export GOMODCACHE=/tmp/go-mod-cache
 exec /opt/homebrew/bin/go run .
 ```
 
+Run the MCP server over HTTP for remote/cloud access:
+
+```bash
+MCP_TRANSPORT=http PORT=8080 go run .
+```
+
+You can also customize the endpoint path and enable an optional bearer token:
+
+```bash
+MCP_TRANSPORT=http \
+PORT=8080 \
+MCP_HTTP_PATH=/mcp \
+MCP_SERVER_TOKEN=replace-me \
+go run .
+```
+
 The server exposes these tools:
 
 - `get_projects`
@@ -143,9 +159,59 @@ Example:
 
 Using `go run /absolute/path/to/ticktick-mcp` directly may fail because it is not equivalent to starting `go run .` from inside the module directory.
 
+### Remote HTTP MCP
+
+For cloud deployment, run the server in HTTP mode and expose the MCP endpoint over HTTPS. The default endpoint path is `/mcp`, and the health endpoint is `/healthz`.
+
+Example local test:
+
+```bash
+MCP_TRANSPORT=http PORT=8080 go run .
+```
+
+Then your remote MCP endpoint is:
+
+```text
+https://your-domain.example/mcp
+```
+
+If you set `MCP_SERVER_TOKEN`, clients must send:
+
+```text
+Authorization: Bearer YOUR_TOKEN
+```
+
+## Docker
+
+Build the container image:
+
+```bash
+docker build -t ticktick-mcp .
+```
+
+Run it as a cloud-ready HTTP server:
+
+```bash
+docker run --rm -p 8080:8080 \
+  -e TICKTICK_API_KEY=your_access_token_here \
+  -e MCP_TRANSPORT=http \
+  -e PORT=8080 \
+  -e MCP_HTTP_PATH=/mcp \
+  -e MCP_SERVER_TOKEN=replace-me \
+  ticktick-mcp
+```
+
+Then verify:
+
+```bash
+curl http://localhost:8080/healthz
+```
+
+For public deployment, put the container behind HTTPS and keep `TICKTICK_API_KEY` and `MCP_SERVER_TOKEN` as server-side secrets.
+
 ## Development
 
-The Go entrypoint is `main.go`, and TickTick client plus tool handlers live in `ticktick.go`.
+The Go entrypoint and transport setup live in `main.go`, and TickTick client plus tool handlers live in `ticktick.go`.
 
 ## License
 
