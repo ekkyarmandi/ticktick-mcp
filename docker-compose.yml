@@ -1,0 +1,13 @@
+services:
+  ticktick-mcp:
+    build: .
+    container_name: ticktick-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      MCP_TRANSPORT: http
+      PORT: 8080
+      MCP_HTTP_PATH: /mcp
+    ports:
+      - "127.0.0.1:8090:8080"
