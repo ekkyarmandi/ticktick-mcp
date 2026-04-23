@@ -1,137 +1,89 @@
 # TickTick MCP
 
-A Model Context Protocol (MCP) server that provides tools for integrating TickTick task management tools. Using Python and the MCP SDK.
+A Go-based Model Context Protocol (MCP) server for TickTick. It exposes TickTick project and task operations over stdio using the official Go MCP SDK.
 
 ## Overview
 
-This repository contains a Model Context Protocol (MCP) server implementation for TickTick. It provides a standardized way for AI assistants and applications to interact with TickTick's task management functionality, allowing operations like:
+This server lets MCP clients interact with TickTick through tools for:
 
-- Retrieving projects and tasks
-- Creating new projects and tasks
-- Updating task details
+- Retrieving projects and project data
+- Retrieving task details and tasks due today
+- Creating projects and tasks
+- Updating tasks
 - Completing and deleting tasks
-
-With this MCP, AI systems can act as task masters to help manage your to-do lists and tasks in TickTick with natural language.
 
 ## Requirements
 
-- Python 3.8+
+- Go 1.25+
 - TickTick account
-- TickTick API key (via OAuth) # COMMENT: I will add a tool to generate an API key from the TickTick developer portal
+- TickTick OpenAPI access token
 
 ## Installation
 
-1. Clone this repository
+1. Clone this repository.
 
    ```bash
    git clone https://github.com/ekkyarmandi/ticktick-mcp.git
    cd ticktick-mcp
    ```
 
-2. Install dependencies
+2. Download Go dependencies.
 
    ```bash
-   pip install -r requirements.txt
+   go mod tidy
    ```
 
-## Obtaining a TickTick API Key
+## TickTick Authentication
 
-This MCP uses TickTick's OpenAPI scheme, which requires registering an app through TickTick's developer portal:
-
-1. Go to the [TickTick Developer Documentation](https://developer.ticktick.com/docs)
-2. Click on `Manage Apps` in the top right corner and login with your TickTick credentials
-3. Register a new app by clicking the `+App Name` button
-4. Enter a name for your app (only required field)
-5. Once created, you'll be able to see your `Client ID` and `Client Secret`
-6. For the `OAuth Redirect URL`, enter a URL where you'll be redirected after authorization (e.g., `http://127.0.0.1:8080`)
-
-### Authorizing Your App
-
-After registering your app, use the [ticktick-py](https://github.com/lazeroffmichael/ticktick-py) library to get your access token:
-
-```python
-from ticktick.oauth2 import OAuth2
-
-# Replace with your details from the developer portal
-client_id = "YOUR_CLIENT_ID"
-client_secret = "YOUR_CLIENT_SECRET"
-redirect_uri = "YOUR_REDIRECT_URI"  # e.g., http://127.0.0.1:8080
-
-auth_client = OAuth2(client_id=client_id,
-                    client_secret=client_secret,
-                    redirect_uri=redirect_uri)
-
-# This will open a web browser for authorization
-# Follow the instructions in the terminal to authorize
-auth_client.get_access_token()
-```
-
-After authorizing, the access token will be saved to a `.token-oauth` file by default. You can extract the token from this file or use:
-
-```python
-print(auth_client.token_info["access_token"])
-```
+This server uses TickTick's OpenAPI bearer token. Register an app in the TickTick developer portal, complete the OAuth flow there, and provide the resulting access token to this server.
 
 ## Configuration
 
-1. Create a `.env` file in the root directory with your TickTick API key:
-   ```
-   TICKTICK_API_KEY=your_access_token_here
-   ```
+Set the following environment variable before starting the server:
+
+```bash
+export TICKTICK_API_KEY=your_access_token_here
+```
+
+Optional:
+
+```bash
+export TICKTICK_API_BASE=https://api.ticktick.com/open/v1
+```
 
 ## Usage
 
-Run the MCP server:
+Run the MCP server over stdio:
 
 ```bash
-python main.py
+go run .
 ```
 
-This will start the MCP server on port 8000. You can now connect to it using any MCP client.
+The server exposes these tools:
 
-### Available Tools
+- `get_projects`
+- `project_details`
+- `get_today_tasks`
+- `get_task_details`
+- `create_project`
+- `create_task`
+- `update_task`
+- `complete_task`
+- `delete_task`
 
-The server provides the following tools:
+## Using With MCP Clients
 
-- `get_projects`: Get a list of all projects
-- `project_details`: Get details of a specific project
-- `get_task_details`: Get details of a specific task
-- `create_project`: Create a new project
-- `create_task`: Create a new task in a project
-- `update_task`: Update an existing task
-- `complete_task`: Mark a task as complete
-- `delete_task`: Delete a task
+Register the built binary or `go run .` command as a stdio MCP server in your client. Example use cases:
 
-### Example Interactions
-
-Once your MCP server is running, AI systems can help manage your tasks with natural language commands like:
-
-- "Show me all my projects"
-- "Create a new project called 'Home Renovation'"
-- "Add a task to buy groceries tomorrow"
-- "Mark my 'Pay bills' task as complete"
-- "What tasks do I have due this week?"
-- "Delete the task about the canceled meeting"
-
-## Using with MCP Clients
-
-This server can be used with any MCP-compatible client, such as:
-
-- Claude Desktop
-- Cursor IDE
-- Custom AI applications using MCP SDKs
+- "Show me all my TickTick projects"
+- "Create a project named Home Renovation"
+- "List tasks due today in Asia/Jakarta"
+- "Mark my Pay bills task as complete"
 
 ## Development
 
-To extend or modify this MCP server:
-
-1. Add new tools in `tools.py`
-2. Register them in `main.py` using `mcp.add_tool()`
+The Go entrypoint is `main.go`, and TickTick client plus tool handlers live in `ticktick.go`.
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.

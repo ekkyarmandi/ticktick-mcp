@@ -6,3 +6,5 @@ archive/
 
 .env
 .token-oauth
+ticktick-mcp
+.mcp.json
