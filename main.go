@@ -130,9 +130,7 @@ func authMiddleware(token string, next http.Handler) http.Handler {
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
-		expected := "Bearer " + token
-		if authHeader != expected {
+		if !requestHasValidAuth(r, token) {
 			w.Header().Set("WWW-Authenticate", `Bearer realm="ticktick-mcp"`)
 			writeJSON(w, http.StatusUnauthorized, map[string]string{
 				"error": "missing or invalid bearer token",
@@ -142,6 +140,26 @@ func authMiddleware(token string, next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+func requestHasValidAuth(r *http.Request, token string) bool {
+	authHeader := strings.TrimSpace(r.Header.Get("Authorization"))
+	expectedBearer := "Bearer " + token
+	if authHeader == expectedBearer {
+		return true
+	}
+
+	xAPIKey := strings.TrimSpace(r.Header.Get("X-API-Key"))
+	if xAPIKey == token {
+		return true
+	}
+
+	apiKey := strings.TrimSpace(r.Header.Get("Api-Key"))
+	if apiKey == token {
+		return true
+	}
+
+	return false
 }
 
 func loggingMiddleware(next http.Handler) http.Handler {

@@ -81,7 +81,7 @@ Run the MCP server over HTTP for remote/cloud access:
 MCP_TRANSPORT=http PORT=8080 go run .
 ```
 
-You can also customize the endpoint path and enable an optional bearer token:
+You can also customize the endpoint path and enable an optional shared token:
 
 ```bash
 MCP_TRANSPORT=http \
@@ -175,10 +175,12 @@ Then your remote MCP endpoint is:
 https://your-domain.example/mcp
 ```
 
-If you set `MCP_SERVER_TOKEN`, clients must send:
+If you set `MCP_SERVER_TOKEN`, clients can authenticate with any of these headers:
 
 ```text
 Authorization: Bearer YOUR_TOKEN
+X-API-Key: YOUR_TOKEN
+Api-Key: YOUR_TOKEN
 ```
 
 ## Docker
