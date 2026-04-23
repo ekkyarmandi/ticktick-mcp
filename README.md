@@ -59,6 +59,12 @@ Run the MCP server over stdio:
 go run .
 ```
 
+If your environment restricts writes to Go's default cache directories, run it with cache paths under `/tmp`:
+
+```bash
+GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod-cache go run .
+```
+
 The server exposes these tools:
 
 - `get_projects`
@@ -79,6 +85,30 @@ Register the built binary or `go run .` command as a stdio MCP server in your cl
 - "Create a project named Home Renovation"
 - "List tasks due today in Asia/Jakarta"
 - "Mark my Pay bills task as complete"
+
+### Claude Code Project Config
+
+This repository includes a project-scoped [.mcp.json](/Users/ekkyarmandi/PARA/01_PROJECTS/Personal/mcp/ticktick-mcp/.mcp.json). A working configuration looks like this:
+
+```json
+{
+  "mcpServers": {
+    "ticktick-mcp": {
+      "type": "stdio",
+      "command": "go",
+      "args": ["run", "."],
+      "cwd": ".",
+      "env": {
+        "TICKTICK_API_KEY": "YOUR_TICKTICK_API_KEY",
+        "GOCACHE": "/tmp/go-build",
+        "GOMODCACHE": "/tmp/go-mod-cache"
+      }
+    }
+  }
+}
+```
+
+`GOCACHE` and `GOMODCACHE` are included because some sandboxed environments cannot write to Go's default cache locations, which causes `claude mcp get` or `claude mcp list` health checks to fail before the MCP handshake.
 
 ## Development
 
