@@ -65,6 +65,16 @@ If your environment restricts writes to Go's default cache directories, run it w
 GOCACHE=/tmp/go-build GOMODCACHE=/tmp/go-mod-cache go run .
 ```
 
+For a more reliable launch from Claude or from a different working directory, use a small wrapper script such as `start.sh`:
+
+```bash
+#!/bin/zsh
+cd /absolute/path/to/ticktick-mcp
+export GOCACHE=/tmp/go-build
+export GOMODCACHE=/tmp/go-mod-cache
+exec /opt/homebrew/bin/go run .
+```
+
 The server exposes these tools:
 
 - `get_projects`
@@ -109,6 +119,29 @@ This repository includes a project-scoped [.mcp.json](/Users/ekkyarmandi/PARA/01
 ```
 
 `GOCACHE` and `GOMODCACHE` are included because some sandboxed environments cannot write to Go's default cache locations, which causes `claude mcp get` or `claude mcp list` health checks to fail before the MCP handshake.
+
+### Claude Code User Config
+
+For a user-scoped or cross-project Claude MCP config, prefer a wrapper script over `args: ["run", "/absolute/path/to/ticktick-mcp"]`. The wrapper is more reliable because it starts `go run .` from the module root and sets writable cache directories first.
+
+Example:
+
+```json
+{
+  "mcpServers": {
+    "ticktick-mcp": {
+      "type": "stdio",
+      "command": "/absolute/path/to/ticktick-mcp/start.sh",
+      "args": [],
+      "env": {
+        "TICKTICK_API_KEY": "YOUR_TICKTICK_API_KEY"
+      }
+    }
+  }
+}
+```
+
+Using `go run /absolute/path/to/ticktick-mcp` directly may fail because it is not equivalent to starting `go run .` from inside the module directory.
 
 ## Development
 

@@ -121,7 +121,9 @@ func stringValue(value any) string {
 }
 
 type tickTickService struct {
-	client *tickTickClient
+	client            *tickTickClient
+	excludedGroupIDs  map[string]bool
+	excludedProjectIDs map[string]bool
 }
 
 type noArgs struct{}
@@ -290,6 +292,11 @@ func (s *tickTickService) getTodayTasks(ctx context.Context, _ *mcp.CallToolRequ
 	for _, project := range projects {
 		projectID := stringValue(project["id"])
 		if projectID == "" {
+			continue
+		}
+
+		groupID := stringValue(project["groupId"])
+		if s.excludedGroupIDs[groupID] || s.excludedProjectIDs[projectID] {
 			continue
 		}
 
