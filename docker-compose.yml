@@ -9,5 +9,11 @@ services:
       MCP_TRANSPORT: http
       PORT: 8080
       MCP_HTTP_PATH: /mcp
+      TICKTICK_TOKEN_FILE: /data/tokens.json
     ports:
       - "127.0.0.1:8090:8080"
+    volumes:
+      - token-data:/data
+
+volumes:
+  token-data:
