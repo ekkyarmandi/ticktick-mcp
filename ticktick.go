@@ -66,9 +66,14 @@ func (c *tickTickClient) request(ctx context.Context, method, path string, body 
 		return nil, fmt.Errorf("build request: %w", err)
 	}
 
-	token, err := c.tokenSrc.AccessToken()
-	if err != nil {
-		return nil, fmt.Errorf("get access token: %w", err)
+	// Per-request token from OAuth proxy takes priority
+	token := bearerTokenFromContext(ctx)
+	if token == "" {
+		var err error
+		token, err = c.tokenSrc.AccessToken()
+		if err != nil {
+			return nil, fmt.Errorf("get access token: %w", err)
+		}
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")

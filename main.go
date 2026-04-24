@@ -127,14 +127,31 @@ func runHTTPServer(server *mcp.Server, cfg runtimeConfig, store *tokenStore) err
 	})
 
 	mux := http.NewServeMux()
-	mux.Handle(cfg.Path, authMiddleware(cfg.ServerToken, mcpHandler))
+
+	// Wrap MCP handler: inject Bearer token into context, then check auth
+	var mcpChain http.Handler = mcpHandler
+	if store != nil {
+		// OAuth mode: inject bearer into context so tool handlers can use it
+		mcpChain = bearerContextMiddleware(mcpChain)
+	}
+	mcpChain = authMiddleware(cfg.ServerToken, mcpChain)
+	mux.Handle(cfg.Path, mcpChain)
 
 	// OAuth routes (only when OAuth mode is active)
 	if store != nil {
+		// Server-side OAuth (direct login flow)
 		mux.HandleFunc("/auth/login", oauthLoginHandler(store.oauth))
 		mux.HandleFunc("/auth/callback", oauthCallbackHandler(store))
 		mux.HandleFunc("/auth/status", oauthStatusHandler(store))
 		log.Printf("OAuth endpoints: /auth/login, /auth/callback, /auth/status")
+
+		// MCP OAuth proxy (for clients like Perplexity)
+		proxyCfg := newMCPOAuthProxyConfig()
+		mux.HandleFunc("/.well-known/oauth-protected-resource", protectedResourceHandler(proxyCfg))
+		mux.HandleFunc("/.well-known/oauth-authorization-server", authorizationServerHandler(proxyCfg))
+		mux.HandleFunc("/oauth/authorize", oauthAuthorizeProxyHandler())
+		mux.HandleFunc("/oauth/token", oauthTokenProxyHandler(proxyCfg))
+		log.Printf("MCP OAuth proxy: /.well-known/oauth-protected-resource, /oauth/authorize, /oauth/token")
 	}
 
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
