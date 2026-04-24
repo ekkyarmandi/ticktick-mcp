@@ -174,8 +174,8 @@ type todayTasksOutput struct {
 type createTaskInput struct {
 	ProjectID  string           `json:"project_id" jsonschema:"TickTick project ID"`
 	Title      string           `json:"title" jsonschema:"Task title"`
-	Content    *string          `json:"content,omitempty" jsonschema:"Task content"`
-	Desc       *string          `json:"desc,omitempty" jsonschema:"Checklist description"`
+	Content    *string          `json:"content,omitempty" jsonschema:"Task description for kind TEXT tasks only. Ignored for CHECKLIST tasks. Maps to the main content area in TickTick UI"`
+	Desc       *string          `json:"desc,omitempty" jsonschema:"Task description for kind CHECKLIST tasks only. Ignored for TEXT tasks. Use content instead for regular tasks"`
 	IsAllDay   *bool            `json:"isAllDay,omitempty" jsonschema:"Whether the task is an all-day event"`
 	StartDate  *string          `json:"startDate,omitempty" jsonschema:"Start date/time in TickTick format, for example 2019-11-13T03:00:00+0000"`
 	DueDate    *string          `json:"dueDate,omitempty" jsonschema:"Due date/time in TickTick format, for example 2019-11-13T03:00:00+0000"`
@@ -184,15 +184,15 @@ type createTaskInput struct {
 	RepeatFlag *string          `json:"repeatFlag,omitempty" jsonschema:"TickTick repeat rule"`
 	Priority   int              `json:"priority" jsonschema:"Task priority, where 0 is normal"`
 	SortOrder  *int             `json:"sortOrder,omitempty" jsonschema:"Sort order within the project"`
-	Items      []map[string]any `json:"items,omitempty" jsonschema:"Subtasks or checklist items"`
+	Items      []map[string]any `json:"items,omitempty" jsonschema:"Inline checklist items for CHECKLIST tasks. Not subtasks -- subtasks are separate task objects linked via childIds/parentId"`
 }
 
 type updateTaskInput struct {
 	TaskID     string           `json:"task_id" jsonschema:"TickTick task ID"`
 	ProjectID  string           `json:"project_id" jsonschema:"TickTick project ID"`
 	Title      *string          `json:"title,omitempty" jsonschema:"Task title"`
-	Content    *string          `json:"content,omitempty" jsonschema:"Task content"`
-	Desc       *string          `json:"desc,omitempty" jsonschema:"Checklist description"`
+	Content    *string          `json:"content,omitempty" jsonschema:"Task description for kind TEXT tasks only. Ignored for CHECKLIST tasks. Maps to the main content area in TickTick UI"`
+	Desc       *string          `json:"desc,omitempty" jsonschema:"Task description for kind CHECKLIST tasks only. Ignored for TEXT tasks. Use content instead for regular tasks"`
 	IsAllDay   *bool            `json:"isAllDay,omitempty" jsonschema:"Whether the task is an all-day event"`
 	StartDate  *string          `json:"startDate,omitempty" jsonschema:"Start date/time in TickTick format, for example 2019-11-13T03:00:00+0000"`
 	DueDate    *string          `json:"dueDate,omitempty" jsonschema:"Due date/time in TickTick format, for example 2019-11-13T03:00:00+0000"`
@@ -201,7 +201,7 @@ type updateTaskInput struct {
 	RepeatFlag *string          `json:"repeatFlag,omitempty" jsonschema:"TickTick repeat rule"`
 	Priority   *int             `json:"priority,omitempty" jsonschema:"Task priority, where 0 is normal"`
 	SortOrder  *int             `json:"sortOrder,omitempty" jsonschema:"Sort order within the project"`
-	Items      []map[string]any `json:"items,omitempty" jsonschema:"Subtasks or checklist items"`
+	Items      []map[string]any `json:"items,omitempty" jsonschema:"Inline checklist items for CHECKLIST tasks. Not subtasks -- subtasks are separate task objects linked via childIds/parentId"`
 }
 
 func registerTools(server *mcp.Server, service *tickTickService) {
