@@ -16,30 +16,39 @@ import (
 
 const defaultTickTickAPIBase = "https://api.ticktick.com/open/v1"
 
-type tickTickClient struct {
-	apiKey  string
-	baseURL string
-	http    *http.Client
+// tokenSource provides an access token for TickTick API requests.
+type tokenSource interface {
+	AccessToken() (string, error)
 }
 
-func newTickTickClientFromEnv() (*tickTickClient, error) {
-	apiKey := strings.TrimSpace(os.Getenv("TICKTICK_API_KEY"))
-	if apiKey == "" {
-		return nil, fmt.Errorf("TICKTICK_API_KEY is required")
-	}
+// staticToken is a tokenSource that always returns the same token.
+type staticToken struct {
+	token string
+}
 
+func (s *staticToken) AccessToken() (string, error) {
+	return s.token, nil
+}
+
+type tickTickClient struct {
+	tokenSrc tokenSource
+	baseURL  string
+	http     *http.Client
+}
+
+func newTickTickClient(src tokenSource) *tickTickClient {
 	baseURL := strings.TrimRight(strings.TrimSpace(os.Getenv("TICKTICK_API_BASE")), "/")
 	if baseURL == "" {
 		baseURL = defaultTickTickAPIBase
 	}
 
 	return &tickTickClient{
-		apiKey:  apiKey,
-		baseURL: baseURL,
+		tokenSrc: src,
+		baseURL:  baseURL,
 		http: &http.Client{
 			Timeout: 30 * time.Second,
 		},
-	}, nil
+	}
 }
 
 func (c *tickTickClient) request(ctx context.Context, method, path string, body any) ([]byte, error) {
@@ -57,7 +66,11 @@ func (c *tickTickClient) request(ctx context.Context, method, path string, body 
 		return nil, fmt.Errorf("build request: %w", err)
 	}
 
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
+	token, err := c.tokenSrc.AccessToken()
+	if err != nil {
+		return nil, fmt.Errorf("get access token: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.http.Do(req)

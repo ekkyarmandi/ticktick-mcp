@@ -22,10 +22,7 @@ const (
 func main() {
 	cfg := parseRuntimeConfig()
 
-	client, err := newTickTickClientFromEnv()
-	if err != nil {
-		log.Fatal(err)
-	}
+	client, oauthStore := newTickTickClientAuto()
 
 	server := mcp.NewServer(
 		&mcp.Implementation{Name: serverName, Version: serverVersion},
@@ -45,12 +42,54 @@ func main() {
 			log.Fatal(err)
 		}
 	case "http":
-		if err := runHTTPServer(server, cfg); err != nil {
+		if err := runHTTPServer(server, cfg, oauthStore); err != nil {
 			log.Fatal(err)
 		}
 	default:
 		log.Fatalf("unsupported transport %q, expected stdio or http", cfg.Transport)
 	}
+}
+
+// newTickTickClientAuto creates a TickTick client using either static token or OAuth.
+// Returns the client and optionally the token store (nil for static mode).
+func newTickTickClientAuto() (*tickTickClient, *tokenStore) {
+	apiKey := strings.TrimSpace(os.Getenv("TICKTICK_API_KEY"))
+	clientID := strings.TrimSpace(os.Getenv("TICKTICK_CLIENT_ID"))
+	clientSecret := strings.TrimSpace(os.Getenv("TICKTICK_CLIENT_SECRET"))
+
+	// OAuth mode
+	if clientID != "" && clientSecret != "" {
+		redirectURI := envOrDefault("TICKTICK_REDIRECT_URI", "http://localhost:8080/auth/callback")
+		scopes := envOrDefault("TICKTICK_SCOPES", "tasks:read tasks:write")
+		tokenFile := envOrDefault("TICKTICK_TOKEN_FILE", tokenFileName)
+
+		oauthCfg := &oauthConfig{
+			ClientID:     clientID,
+			ClientSecret: clientSecret,
+			RedirectURI:  redirectURI,
+			Scopes:       scopes,
+		}
+
+		store := newTokenStore(oauthCfg, tokenFile)
+		client := newTickTickClient(store)
+
+		if store.HasTokens() {
+			log.Printf("OAuth mode: using stored tokens (refresh enabled)")
+		} else {
+			log.Printf("OAuth mode: no tokens yet -- visit /auth/login to connect TickTick")
+		}
+
+		return client, store
+	}
+
+	// Static token mode (backwards compatible)
+	if apiKey == "" {
+		log.Fatal("Either TICKTICK_API_KEY or TICKTICK_CLIENT_ID + TICKTICK_CLIENT_SECRET must be set")
+	}
+
+	log.Printf("Static token mode: using TICKTICK_API_KEY")
+	client := newTickTickClient(&staticToken{token: apiKey})
+	return client, nil
 }
 
 type runtimeConfig struct {
@@ -80,7 +119,7 @@ func parseRuntimeConfig() runtimeConfig {
 	}
 }
 
-func runHTTPServer(server *mcp.Server, cfg runtimeConfig) error {
+func runHTTPServer(server *mcp.Server, cfg runtimeConfig, store *tokenStore) error {
 	mcpHandler := mcp.NewStreamableHTTPHandler(func(*http.Request) *mcp.Server {
 		return server
 	}, &mcp.StreamableHTTPOptions{
@@ -89,6 +128,15 @@ func runHTTPServer(server *mcp.Server, cfg runtimeConfig) error {
 
 	mux := http.NewServeMux()
 	mux.Handle(cfg.Path, authMiddleware(cfg.ServerToken, mcpHandler))
+
+	// OAuth routes (only when OAuth mode is active)
+	if store != nil {
+		mux.HandleFunc("/auth/login", oauthLoginHandler(store.oauth))
+		mux.HandleFunc("/auth/callback", oauthCallbackHandler(store))
+		mux.HandleFunc("/auth/status", oauthStatusHandler(store))
+		log.Printf("OAuth endpoints: /auth/login, /auth/callback, /auth/status")
+	}
+
 	mux.HandleFunc("/healthz", func(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{
 			"ok":        true,
@@ -100,13 +148,18 @@ func runHTTPServer(server *mcp.Server, cfg runtimeConfig) error {
 		})
 	})
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		writeJSON(w, http.StatusOK, map[string]any{
+		info := map[string]any{
 			"name":         serverName,
 			"version":      serverVersion,
 			"mcp_endpoint": cfg.Path,
 			"health":       "/healthz",
 			"transport":    "streamable-http",
-		})
+		}
+		if store != nil {
+			info["auth_login"] = "/auth/login"
+			info["auth_status"] = "/auth/status"
+		}
+		writeJSON(w, http.StatusOK, info)
 	})
 
 	httpServer := &http.Server{
